@@ -47,15 +47,16 @@
 </template>
 
 <script>
-import { computed } from 'vue'
-import { useRecetasStore } from '../stores/recetas'
+import { computed, onMounted, ref } from 'vue'
+import { useRecetasStore } from '@/stores/recetas'
+import { formatFecha } from '@/utils/formato'
 
 export default {
   name: 'ListaRecetas',
   
   setup() {
     const recetasStore = useRecetasStore()
-    
+    console.log(recetasStore.recetas);
     // Obtener recetas del store
     const recetas = computed(() => recetasStore.recetas)
     const recetasOrdenadas = computed(() => recetasStore.recetasOrdenadas)

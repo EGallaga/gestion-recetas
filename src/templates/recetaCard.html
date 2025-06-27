@@ -1,0 +1,22 @@
+<div class="receta-header">
+  <h3>{{ nombre }}</h3>
+  <span v-if="dificultad" :class="['dificultad', getDificultadClass(dificultad)]">
+    {{ dificultad }}
+  </span>
+</div>
+<div class="receta-tiempo" v-if="tiempo || fecha">
+  <span v-if="tiempo">⏱️ {{ tiempo }} min</span>
+  <span v-if="fecha">📅 {{ formatFecha(fecha) }}</span>
+</div>
+<div class="receta-ingredientes" v-if="ingredientes">
+  <h4>Ingredientes:</h4>
+  <ul>
+    <li v-for="(ingrediente, index) in ingredientes.split(',').filter(i => i.trim())" :key="index">
+      {{ ingrediente.trim() }}
+    </li>
+  </ul>
+</div>
+<div class="receta-instrucciones" v-if="instrucciones">
+  <h4>Preparación:</h4>
+  <p>{{ instrucciones }}</p>
+</div>
