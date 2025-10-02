@@ -12,6 +12,8 @@
 </template>
 
 <script>
+import { onMounted } from 'vue';
+import { useRecetasStore } from './stores/recetas';
 import FormularioReceta from './components/FormularioReceta.vue'
 import ListaRecetas from './components/ListaRecetas.vue'
 
@@ -20,6 +22,14 @@ export default {
   components: {
     FormularioReceta,
     ListaRecetas
+  },
+  setup() {
+    const recetasStore = useRecetasStore();
+
+    // Cargar recetas al montar el componente
+    onMounted(async () => {
+      await recetasStore.cargarRecetas();
+    });
   }
 }
 </script>
