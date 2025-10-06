@@ -1,13 +1,13 @@
 <template>
   <div class="formulario-receta">
-    <h2>Agregar Nueva Receta</h2>
-    <form @submit.prevent="agregarReceta">
+    <h2>{{ recetaId ? 'Editar Receta' : 'Nueva Receta' }}</h2>
+    <form @submit.prevent="guardarReceta">
       <div class="form-group">
         <label for="nombre">Nombre de la receta:</label>
         <input 
           type="text" 
           id="nombre" 
-          v-model="nuevaReceta.nombre" 
+          v-model="receta.nombre" 
           required 
           class="form-control"
           placeholder="Ej: Paella valenciana"
@@ -15,22 +15,49 @@
       </div>
       
       <div class="form-group">
-        <label for="ingredientes">Ingredientes:</label>
-        <textarea 
-          id="ingredientes" 
-          v-model="nuevaReceta.ingredientes" 
-          required 
-          class="form-control"
-          placeholder="Lista los ingredientes separados por comas"
-          rows="4"
-        ></textarea>
+        <label>Ingredientes:</label>
+        <div class="ingredientes-input">
+          <input
+            type="text"
+            v-model="nuevoIngrediente"
+            class="form-control"
+            placeholder="Escribe un ingrediente"
+            @keyup.enter.prevent="agregarIngrediente"
+          >
+          <button 
+            type="button" 
+            class="btn-agregar"
+            @click="agregarIngrediente"
+            :disabled="!nuevoIngrediente.trim()"
+            title="Añadir ingrediente"
+          >
+            <span>+</span>
+          </button>
+        </div>
+        
+        <div class="lista-ingredientes" v-if="receta.ingredientes.length > 0">
+          <div v-for="(ingrediente, index) in receta.ingredientes" :key="index" class="ingrediente-item">
+            <span>{{ ingrediente }}</span>
+            <button 
+              type="button" 
+              class="btn-eliminar"
+              @click="eliminarIngrediente(index)"
+              title="Eliminar ingrediente"
+            >
+              <span>-</span>
+            </button>
+          </div>
+        </div>
+        <div v-else class="sin-ingredientes">
+          No hay ingredientes añadidos
+        </div>
       </div>
       
       <div class="form-group">
         <label for="instrucciones">Instrucciones:</label>
         <textarea 
           id="instrucciones" 
-          v-model="nuevaReceta.instrucciones" 
+          v-model="receta.instrucciones" 
           required 
           class="form-control"
           placeholder="Describe los pasos para preparar la receta"
@@ -43,7 +70,7 @@
         <input 
           type="number" 
           id="tiempo" 
-          v-model.number="nuevaReceta.tiempo" 
+          v-model.number="receta.tiempo" 
           min="1" 
           required 
           class="form-control"
@@ -54,8 +81,8 @@
         <label for="dificultad">Dificultad:</label>
         <select 
           id="dificultad" 
-          v-model="nuevaReceta.dificultad" 
-          required
+          v-model="receta.dificultad" 
+          required 
           class="form-control"
         >
           <option value="">Selecciona una opción</option>
@@ -65,76 +92,180 @@
         </select>
       </div>
       
-      <button type="submit" class="btn btn-primary">Guardar Receta</button>
+      <div class="form-actions">
+        <button type="button" @click="cancelar" class="btn btn-secondary">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+          {{ recetaId ? 'Actualizar' : 'Guardar' }} Receta
+        </button>
+      </div>
     </form>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
-import { useRecetasStore } from '../stores/recetas'
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useRecetasStore } from '@/stores/recetas';
 
 export default {
   name: 'FormularioReceta',
   
   setup() {
-    const recetasStore = useRecetasStore()
+    const router = useRouter();
+    const route = useRoute();
+    const recetasStore = useRecetasStore();
+    const recetaId = route.params.id;
+    const nuevoIngrediente = ref('');
     
-    const nuevaReceta = ref({
-      id: Date.now(),
+    const receta = ref({
       nombre: '',
-      ingredientes: '',
+      ingredientes: [],
       instrucciones: '',
       tiempo: 30,
       dificultad: '',
       fecha: new Date().toISOString().split('T')[0]
-    })
+    });
     
-    const agregarReceta = () => {
-      recetasStore.agregarReceta({
-        ...nuevaReceta.value,
-        id: Date.now()
-      })
-      
-      // Resetear el formulario
-      nuevaReceta.value = {
-        id: Date.now(),
-        nombre: '',
-        ingredientes: '',
-        instrucciones: '',
-        tiempo: 30,
-        dificultad: '',
-        fecha: new Date().toISOString().split('T')[0]
+    const agregarIngrediente = () => {
+      if (nuevoIngrediente.value.trim()) {
+        receta.value.ingredientes.push(nuevoIngrediente.value.trim());
+        nuevoIngrediente.value = '';
       }
-      
-      alert('¡Receta guardada exitosamente!')
-    }
+    };
+    
+    const eliminarIngrediente = (index) => {
+      receta.value.ingredientes.splice(index, 1);
+    };
+    
+    // Si estamos editando, cargamos la receta
+    onMounted(async () => {
+      if (recetaId) {
+        try {
+          // Primero cargamos las recetas
+          await recetasStore.cargarRecetas();
+          
+          // Luego obtenemos la receta por su ID
+          const recetaExistente = recetasStore.obtenerRecetaPorId(recetaId);
+          
+          if (recetaExistente) {
+            // Copiamos los valores de la receta existente
+            receta.value = { ...recetaExistente };
+          } else {
+            console.error('No se encontró la receta con ID:', recetaId);
+            router.push('/');
+          }
+        } catch (error) {
+          console.error('Error al cargar la receta:', error);
+        }
+      }
+    });
+    
+    const guardarReceta = async () => {
+      try {
+        if (recetaId) {
+          await recetasStore.actualizarReceta(parseInt(recetaId), receta.value);
+        } else {
+          await recetasStore.agregarReceta(receta.value);
+        }
+        router.push('/');
+      } catch (error) {
+        console.error('Error al guardar la receta:', error);
+      }
+    };
+    
+    const cancelar = () => {
+      router.push('/');
+    };
     
     return {
-      nuevaReceta,
-      agregarReceta
-    }
+      receta,
+      recetaId,
+      nuevoIngrediente,
+      agregarIngrediente,
+      eliminarIngrediente,
+      guardarReceta,
+      cancelar
+    };
   }
 }
 </script>
 
 <style scoped>
 .formulario-receta {
-  background: white;
+  max-width: 800px;
+  margin: 0 auto;
   padding: 2rem;
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
   color: #2c3e50;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  text-align: center;
 }
 
 .form-group {
   margin-bottom: 1.5rem;
+}
+
+.ingredientes-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.btn-agregar, .btn-eliminar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #42b983;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-agregar:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.btn-eliminar {
+  background-color: #e74c3c;
+  width: 1.8rem;
+  height: 1.8rem;
+  font-size: 1rem;
+}
+
+.lista-ingredientes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.ingrediente-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #42b983;
+}
+
+.sin-ingredientes {
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 0.5rem;
 }
 
 label {
@@ -150,6 +281,13 @@ label {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  border-color: #42b983;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 185, 131, 0.2);
 }
 
 textarea.form-control {
@@ -158,13 +296,13 @@ textarea.form-control {
 }
 
 .btn {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.2s;
 }
 
 .btn-primary {
@@ -176,12 +314,39 @@ textarea.form-control {
   background-color: #3aa876;
 }
 
-.btn-danger {
-  background-color: #e74c3c;
-  color: white;
+.btn-secondary {
+  background-color: #f1f1f1;
+  color: #333;
+  margin-right: 1rem;
 }
 
-.btn-danger:hover {
-  background-color: #c0392b;
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .formulario-receta {
+    padding: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .btn-secondary {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
 }
 </style>

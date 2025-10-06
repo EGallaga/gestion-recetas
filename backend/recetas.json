@@ -1,11 +1,30 @@
 [
   {
-    "id": 1751018879734,
-    "nombre": "MAcarrones",
-    "ingredientes": "PAsta, tomate",
-    "instrucciones": "Cocer la pasta, juntar el tomate",
-    "tiempo": 15,
+    "id": 1759490578749,
+    "nombre": "Arroz",
+    "ingredientes": [
+      "Arroz",
+      "carne",
+      "verduras"
+    ],
+    "instrucciones": "Pochar las verduras\nDespues añadir la carne para que se dore.\nPoner el arroz y sofreir todo junto.\nPoner el agua o el caldo y dejar cocer a fuego medio hasta que se consuma.",
+    "tiempo": 45,
+    "dificultad": "Media",
+    "fecha": "2025-10-03"
+  },
+  {
+    "id": 1759740718303,
+    "nombre": "Pollo al curry",
+    "ingredientes": [
+      "Pollo",
+      "Cebolla",
+      "Zanahoria",
+      "Curry",
+      "Caldo"
+    ],
+    "instrucciones": "Pochar la verdura.\nRehogar con el pollo.\nSofreir el curry\nagregar el caldo y dejar cocinar todo.",
+    "tiempo": 45,
     "dificultad": "Fácil",
-    "fecha": "2025-06-27"
+    "fecha": "2025-10-06"
   }
 ]

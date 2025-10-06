@@ -5,8 +5,7 @@
     </header>
     
     <main class="container">
-      <FormularioReceta />
-      <ListaRecetas />
+      <router-view />
     </main>
   </div>
 </template>
@@ -14,15 +13,9 @@
 <script>
 import { onMounted } from 'vue';
 import { useRecetasStore } from './stores/recetas';
-import FormularioReceta from './components/FormularioReceta.vue'
-import ListaRecetas from './components/ListaRecetas.vue'
 
 export default {
   name: 'App',
-  components: {
-    FormularioReceta,
-    ListaRecetas
-  },
   setup() {
     const recetasStore = useRecetasStore();
 

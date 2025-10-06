@@ -62,21 +62,25 @@ export const useRecetasStore = defineStore('recetas', {
       try {
         await guardarRecetas(this.recetas)
       } catch (error) {
-        this.error = 'Error al guardar recetas'
+        console.error('Error al guardar las recetas:', error)
+        throw error
       }
     }
   },
 
   getters: {
-    totalRecetas: (state) => state.recetas.length,
-    recetasOrdenadas: (state) => {
-      if (!Array.isArray(state.recetas)) return []
+    totalRecetas(state) {
+      return state.recetas.length;
+    },
+    recetasOrdenadas(state) {
       return [...state.recetas].sort((a, b) => {
-        const nombreA = String(a.nombre || '').toLowerCase()
-        const nombreB = String(b.nombre || '').toLowerCase()
-        return nombreA.localeCompare(nombreB)
-      })
+        const fechaA = new Date(a.fecha.split('/').reverse().join('/'));
+        const fechaB = new Date(b.fecha.split('/').reverse().join('/'));
+        return fechaB - fechaA;
+      });
+    },
+    obtenerRecetaPorId: (state) => (id) => {
+      return state.recetas.find(receta => receta.id === parseInt(id));
     }
   }
-})
-
+  })
