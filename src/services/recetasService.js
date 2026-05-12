@@ -1,5 +1,5 @@
-const API_URL = 'http://localhost:3001/api/recetas';
-
+const API_URL = import.meta.env.PROD?
+import.meta.env.VITE_APP_BACKEND:"http://localhost:3001/api/recetas";
 export async function obtenerRecetas() {
   const res = await fetch(API_URL);
   if (!res.ok) throw new Error('Error al obtener recetas');
